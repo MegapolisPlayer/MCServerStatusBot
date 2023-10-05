@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Workspace Name="MCServerStatusBot" Database="" Version="10000">
+  <Project Name="MCServerStatusBot" Path="MCServerStatusBot/MCServerStatusBot.project" Active="Yes"/>
+  <BuildMatrix>
+    <WorkspaceConfiguration Name="Debug">
+      <Environment/>
+      <Project Name="MCServerStatusBot" ConfigName="Debug"/>
+      <Project Name="MCServerStatusBot" ConfigName="Debug"/>
+      <Project Name="MCServerStatusBot" ConfigName="Debug"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="Release">
+      <Environment/>
+      <Project Name="MCServerStatusBot" ConfigName="Release"/>
+      <Project Name="MCServerStatusBot" ConfigName="Release"/>
+      <Project Name="MCServerStatusBot" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+  </BuildMatrix>
+</CodeLite_Workspace>

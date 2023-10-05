@@ -1,0 +1,6 @@
+.codelite/
+.cache/
+build-Debug/
+build-Release/
+*.clangd
+*.clang-format
