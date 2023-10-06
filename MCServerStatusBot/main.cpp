@@ -46,6 +46,14 @@ void connect(asio::ssl::stream<asio::ip::tcp::socket>& asocket, asio::ip::tcp::e
 	else { std::cout << "Handshake failure: " + ec.message() + "\n"; exit(-1); }
 }
 
+std::string makerequest() {
+	return 
+		"GET /server/status?ip=" + programinfo.serverip + "&port=" + programinfo.serverport + " HTTP/1.1\r\n"
+		"Host: mcapi.us\r\n"
+		"User-Agent: Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\r\n" //otherwise cloudflare blocks...
+		"Connection: close\r\n\r\n";
+}
+
 std::vector<char> readbuf;
 std::vector<char> tempbuf(10000);
 std::atomic_bool isdone(false);
@@ -103,21 +111,41 @@ void resetreadnetdata() {
 	hasreadhttpheader = false;
 }
 
-int main(int argc, char **argv) {
-	std::cout << "NETWORK TESTING using ASIO\n(c) Martin, 2023\n";
-	if(argc == 3) {
-		programinfo.serverip = argv[1];
-		programinfo.serverport = argv[2];
-		//first arg doesnt count
-		std::cout << 
-			"ServerName: " << programinfo.serverip << "\n" <<
-			"ServerPort: " << programinfo.serverport << "\n";
+namespace botresponse {
+	void serverinfo(const dpp::slashcommand_t& aevent) {
+		//get server information - all of it
 	}
-	else {
-		std::cout << "Error: Arguments not provided.\n";
-		//exit(-1);
+	void status(const dpp::slashcommand_t& aevent) {
+		//get server status
+	}
+	void players(const dpp::slashcommand_t& aevent) {
+		//get player amount
+	}
+	void help(const dpp::slashcommand_t& aevent) {
+		//send list of commands
+	}
+	void credits(const dpp::slashcommand_t& aevent) {
+		//send embed with credits
 	}
 	
+	void home(const dpp::slashcommand_t& aevent) {
+		//set this channel to home channel, admin only
+	}
+	void change(const dpp::slashcommand_t& aevent) {
+		//changes the server IP and port, admin only
+	}
+}
+
+int main(int argc, char **argv) {
+	std::cout << "MC Server Status Discord Bot\n(c) Martin/MegapolisPlater, 2023\n";
+	if(argc == 3) {
+		programinfo.serverip = argv[1]; //first arg doesnt count
+		programinfo.serverport = argv[2];
+		std::cout << "ServerName: " << programinfo.serverip << "\n" << "ServerPort: " << programinfo.serverport << "\n";
+	}
+	else { std::cout << "Error: Arguments not provided.\n"; exit(-1); }
+	
+	//BASIC ASIO
 	asio::error_code ec;
 	asio::io_context iocontext;
 	auto wg = asio::make_work_guard(iocontext.get_executor());
@@ -131,12 +159,11 @@ int main(int argc, char **argv) {
 	asio::ip::tcp::endpoint netendpoint;
 	DNSresolve(&netendpoint, iocontext);
 	
-	std::string webrequest =
-		"GET /server/status?ip=" + programinfo.serverip + "&port=" + programinfo.serverport + " HTTP/1.1\r\n"
-		"Host: mcapi.us\r\n"
-		"User-Agent: Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\r\n" //otherwise cloudflare blocks...
-		"Connection: close\r\n\r\n"
-		;
+	std::string webrequest = makerequest();
+	
+	dpp::cluster bot(programinfo.bottoken);
+	bot.on_log(dpp::utility::cout_logger());
+	
 	
 	while(true) {
 		securesocket = asio::ssl::stream<asio::ip::tcp::socket>(iocontext, sslcontext);
@@ -155,14 +182,13 @@ int main(int argc, char **argv) {
 		std::cout << "Read " << readbuf.size() << " bytes in total.\n-----\n";
 		
 		json js = json::parse(readbuf);
-		std::cout << "Status: " << js["status"] << "\n";
-		std::cout << "Online: " << js["online"] << "\n";
-		std::cout << "MOTD: " << js["motd"] << "\n";
-		std::cout << "Players: " << js["players"] << "\n";
-		std::cout << "PlayersNow: " << js["players"]["now"] << "\n";
-		std::cout << "PlayersMax: " << js["players"]["max"] << "\n";
-		std::cout << "Sample: " << js["players"]["sample"] << "\n";
-		std::cout << "ServerName: " << js["server"]["name"] << "\n";
+		std::cout << 
+			"Status: " << js["status"] << "\nOnline: " << js["online"] <<
+			"\nMOTD: " << js["motd"] << "\n" << "Players: " << js["players"] <<
+			"\nPlayersNow: " << js["players"]["now"] <<
+			"\nPlayersMax: " << js["players"]["max"] << 
+			"\nSample: " << js["players"]["sample"] << 
+			"\nServerName: " << js["server"]["name"] << "\n";
 		
 		std::cout << "-----\n";
 		for(int i = 60; i > 0; i--) {
