@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 		programinfo.serverport = argv[2];
 		std::cout << "ServerName: " << programinfo.serverip << "\n" << "ServerPort: " << programinfo.serverport << "\n";
 	}
-	else { std::cout << "Error: Arguments not provided.\n"; exit(-1); }
+	else { std::cout << "Arguments not provided, using defaults.\n"; }
 	
 	//BASIC ASIO
 	asio::error_code ec;
@@ -164,6 +164,19 @@ int main(int argc, char **argv) {
 	dpp::cluster bot(programinfo.bottoken);
 	bot.on_log(dpp::utility::cout_logger());
 	
+	bot.on_ready([&bot](const dpp::ready_t& event) {
+		if (dpp::run_once<struct register_bot_commands>()) {
+			bot.global_command_create(dpp::slashcommand("serverinfo", "Gets general information about the server", bot.me.id));
+			bot.global_command_create(dpp::slashcommand("status", "Gets current server status.", bot.me.id));
+			bot.global_command_create(dpp::slashcommand("players", "List and amount of players currently online.", bot.me.id));
+			bot.global_command_create(dpp::slashcommand("help", "Help menu with bot usage.", bot.me.id));
+			bot.global_command_create(dpp::slashcommand("credits", "Author of the bot.", bot.me.id));
+			bot.global_command_create(dpp::slashcommand("home", "(admin only) Changes so bot write automatic updates to this channel.", bot.me.id));
+			bot.global_command_create(dpp::slashcommand("change", "(admin only) Changes IP and port of server to display.", bot.me.id));
+		}
+	});
+	
+	std::thread botthread([&](){ bot.start(dpp::st_wait); });
 	
 	while(true) {
 		securesocket = asio::ssl::stream<asio::ip::tcp::socket>(iocontext, sslcontext);
@@ -191,9 +204,9 @@ int main(int argc, char **argv) {
 			"\nServerName: " << js["server"]["name"] << "\n";
 		
 		std::cout << "-----\n";
-		for(int i = 60; i > 0; i--) {
-			std::cout << "\rNext update in: " << std::setfill('0') << std::setw(2) << i << " second(s)." << std::flush;
-			std::this_thread::sleep_for(std::chrono::seconds(1));
+		for(int i = 12; i > 0; i--) {
+			std::cout << "\r[NETWORK] Next data update in: " << std::setfill('0') << std::setw(2) << i * 5 << " second(s)." << std::flush;
+			std::this_thread::sleep_for(std::chrono::seconds(5));
 		}
 		std::cout << "\n" << std::setw(0);
 	}
@@ -201,6 +214,9 @@ int main(int argc, char **argv) {
 	wg.reset(); //work groups do not block!
 	iocontext.stop();
 	contextthread.join();
+	
+	bot.shutdown();
+	botthread.join();
 	
 	return 0;
 }
