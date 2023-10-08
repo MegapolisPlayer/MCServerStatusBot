@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <chrono>
 #include <thread>
+#include <algorithm>
 
 #include "json.hpp"
 using namespace nlohmann;
@@ -28,14 +29,17 @@ using namespace nlohmann;
 #include "asio.hpp"
 #include "asio/ssl.hpp"
 
+#define API_UPDATE_TIME_S 90
+
 static struct {
 	std::string serverip = "witch.hostify.cz";
 	std::string serverport = "38170";
 	std::string bottoken = "";
 	
+	json oldserver;
 	json serverdata;
-	dpp::snowflake channelid = 0; //channel id for automatic updates
-	bool autoenabled = false;
+	
+	bool mainloop = true;
 } programinfo;
 
 //ASIO FUNCTIONS
@@ -122,6 +126,12 @@ void resetreadnetdata() {
 
 //BOT RESPONSES
 
+static struct {
+	dpp::cluster bothandle = dpp::cluster(programinfo.bottoken);
+	dpp::snowflake channelid = 0; //channel id for automatic updates
+	bool autoenabled = false;
+} bot;
+
 namespace botresponse {
 	void serverinfo(const dpp::slashcommand_t& aevent) {
 		//get server information - all of it
@@ -136,37 +146,91 @@ namespace botresponse {
 		);
 		ebd.set_color(128);
 		
+		if(programinfo.serverdata["online"].template get<bool>() == false) {
+			//server offline
+			ebd.add_field("Server offline!", "This server is currently offline.", true);
+			msg.add_embed(ebd); aevent.reply(msg); return;
+		}
+		
 		ebd.add_field("Name of Server", programinfo.serverdata["server"]["name"], true);
 		ebd.add_field("Online", ((programinfo.serverdata["online"].template get<bool>() == true) ? "Yes" : "No"), true);
 		ebd.add_field("Message", programinfo.serverdata["motd"], true);
-		ebd.add_field(
-			"Current Players",
-			std::to_string(programinfo.serverdata["players"]["now"].template get<uint32_t>()), true);
-		ebd.add_field(
-			"Maximum Players",
-			std::to_string(programinfo.serverdata["players"]["max"].template get<uint32_t>()), true);
 		
-		std::vector<json> playersnames;
+		uint32_t playersnow = programinfo.serverdata["players"]["now"].template get<uint32_t>();
+		ebd.add_field("Current Players", std::to_string(playersnow), true);
+		ebd.add_field("Maximum Players", std::to_string(programinfo.serverdata["players"]["max"].template get<uint32_t>()), true);
+		
 		std::string playernamemsg;
-		programinfo.serverdata["players"]["sample"].template get<std::vector<json>>();
+		json playersnames = programinfo.serverdata["players"]["sample"];
 			
-		for(uint64_t i = 0; i < programinfo.serverdata["players"]["now"].template get<uint32_t>(); i++) {
+		for(uint32_t i = 0; i < playersnow; i++) {
 			playernamemsg += playersnames[i]["name"].template get<std::string>();
-			playernamemsg += "\n";
+			if(i != playersnow - 1) { playernamemsg += ", "; }
 		}
+		if(playersnow == 0) { playernamemsg += "none"; }
 		
-		ebd.add_field("List of players", playernamemsg, false);
+		ebd.add_field("List of Players", playernamemsg, false);
 		
 		msg.add_embed(ebd);
 		aevent.reply(msg);
 	}
 	void status(const dpp::slashcommand_t& aevent) {
 		//get server status
-		aevent.reply("Not implemented yet.");
+		dpp::message msg;
+		dpp::embed ebd;
+		ebd.set_title("Server status");
+		ebd.set_description("Current server status\n");
+		ebd.set_author(
+			"MCServerStatusBot by Martin/MegapolisPlayer",
+			"https://megapolisplayer.github.io", 
+			"https://megapolisplayer.github.io/assets/icons/favicon.png"
+		);
+		ebd.set_color(128);
+		
+		if(programinfo.serverdata["online"].template get<bool>() == false) {
+			ebd.add_field("Server offline!", "This server is currently offline.", true);
+			msg.add_embed(ebd);	aevent.reply(msg); return;
+		}
+		
+		ebd.add_field("Name of Server", programinfo.serverdata["server"]["name"], true);
+		ebd.add_field("Online", ((programinfo.serverdata["online"].template get<bool>() == true) ? "Yes" : "No"), true);
+		ebd.add_field("Message", programinfo.serverdata["motd"], true);
+		
+		msg.add_embed(ebd);
+		aevent.reply(msg);
 	}
 	void players(const dpp::slashcommand_t& aevent) {
-		//get player amount
-		aevent.reply("Not implemented yet.");
+		//get player amount and their names
+		dpp::message msg;
+		dpp::embed ebd;
+		ebd.set_title("Player information");
+		ebd.set_description("A list of Players.\n");
+		ebd.set_author(
+			"MCServerStatusBot by Martin/MegapolisPlayer",
+			"https://megapolisplayer.github.io", 
+			"https://megapolisplayer.github.io/assets/icons/favicon.png"
+		);
+		ebd.set_color(128);
+		
+		uint32_t playersnow = programinfo.serverdata["players"]["now"].template get<uint32_t>();
+		ebd.add_field("Current Players", std::to_string(playersnow), true);
+		ebd.add_field("Maximum Players", std::to_string(programinfo.serverdata["players"]["max"].template get<uint32_t>()), true);
+		
+		std::string playernamemsg;
+		json playersnames = programinfo.serverdata["players"]["sample"];
+			
+		for(uint32_t i = 0; i < playersnow; i++) {
+			playernamemsg += playersnames[i]["name"].template get<std::string>();
+			if(i != playersnow - 1) {
+				playernamemsg += ", ";
+			}
+		}
+		if(playersnow == 0) { playernamemsg += "none"; }
+		
+		ebd.add_field("List of Players", playernamemsg, false);
+		
+		msg.add_embed(ebd);
+		aevent.reply(msg);
 	}
 	void help(const dpp::slashcommand_t& aevent) {
 		//send list of commands, in an embed
@@ -220,22 +284,32 @@ namespace botresponse {
 	
 	void home(const dpp::slashcommand_t& aevent) {
 		//set this channel to home channel, admin only
-		aevent.reply("Not implemented yet.");
+		bot.channelid = aevent.command.channel_id;
+		
+		dpp::channel homechannel = bot.bothandle.channel_get_sync(bot.channelid);
+		
+		aevent.reply(dpp::message("Channel " + homechannel.name + " is now the home channel.").set_flags(dpp::m_ephemeral));
 	}
 	void change(const dpp::slashcommand_t& aevent) {
 		//changes the server IP and port, admin only
-		aevent.reply("Not implemented yet.");
+		
+		programinfo.serverip = std::get<std::string>(aevent.get_parameter("ip"));
+		programinfo.serverport = std::get<std::string>(aevent.get_parameter("port"));
+		
+		aevent.reply(dpp::message("IP and port changed.\nIP is now " + programinfo.serverip + " and the port is now " + programinfo.serverport).set_flags(dpp::m_ephemeral));
 	}
 	void enableautoupdate(const dpp::slashcommand_t& aevent) {
-		programinfo.autoenabled = true; 
+		bot.autoenabled = true; 
+		aevent.reply(dpp::message("Automatic updates enabled.").set_flags(dpp::m_ephemeral));
 	}
 	void disableautoupdate(const dpp::slashcommand_t& aevent) {
-		programinfo.autoenabled = false; 
+		bot.autoenabled = false; 
+		aevent.reply(dpp::message("Automatic updates disabled.").set_flags(dpp::m_ephemeral));
 	}
 }
 
 int main(int argc, char **argv) {
-	std::cout << "MC Server Status Discord Bot\n(c) Martin/MegapolisPlater, 2023\n";
+	std::cout << "MC Server Status Discord Bot\n(c) Martin/MegapolisPlater, 2023\nPress q/Q and ENTER to exit.\n";
 	if(argc == 3) {
 		programinfo.serverip = argv[1]; //first arg doesnt count
 		programinfo.serverport = argv[2];
@@ -259,10 +333,9 @@ int main(int argc, char **argv) {
 	
 	std::string webrequest = makerequest();
 	
-	dpp::cluster bot(programinfo.bottoken);
-	bot.on_log(dpp::utility::cout_logger());
+	bot.bothandle.on_log(dpp::utility::cout_logger());
 	
-	bot.on_slashcommand([&](const dpp::slashcommand_t& event) {
+	bot.bothandle.on_slashcommand([&](const dpp::slashcommand_t& event) {
 		if (event.command.get_command_name() == "serverinfo") { botresponse::serverinfo(event); return; }
 		if (event.command.get_command_name() == "status") { botresponse::status(event); return; }
 		if (event.command.get_command_name() == "players") { botresponse::players(event); return; }
@@ -271,43 +344,58 @@ int main(int argc, char **argv) {
 		
 		if (event.command.get_command_name() == "home") { botresponse::home(event); return; }
 		if (event.command.get_command_name() == "change") { botresponse::change(event); return; }
+		if (event.command.get_command_name() == "enableautoupdate") { botresponse::enableautoupdate(event); return; }
+		if (event.command.get_command_name() == "disableautoupdate") { botresponse::disableautoupdate(event); return; }
 		
 	});
-	bot.on_ready([&bot](const dpp::ready_t& event) {
+	bot.bothandle.on_ready([&](const dpp::ready_t& event) {
 		if (dpp::run_once<struct register_bot_commands>()) {
 			//normal commands
 			
-			bot.global_command_create(dpp::slashcommand("serverinfo", "Gets general information about the server.", bot.me.id));
-			bot.global_command_create(dpp::slashcommand("status", "Gets current server status.", bot.me.id));
-			bot.global_command_create(dpp::slashcommand("players", "List and amount of players currently online.", bot.me.id));
-			bot.global_command_create(dpp::slashcommand("help", "Help menu with bot usage.", bot.me.id));
-			bot.global_command_create(dpp::slashcommand("credits", "Author of the bot.", bot.me.id));
+			bot.bothandle.global_command_create(dpp::slashcommand("serverinfo", "Gets general information about the server.", bot.bothandle.me.id));
+			bot.bothandle.global_command_create(dpp::slashcommand("status", "Gets current server status.", bot.bothandle.me.id));
+			bot.bothandle.global_command_create(dpp::slashcommand("players", "List and amount of players currently online.", bot.bothandle.me.id));
+			bot.bothandle.global_command_create(dpp::slashcommand("help", "Help menu with bot usage.", bot.bothandle.me.id));
+			bot.bothandle.global_command_create(dpp::slashcommand("credits", "Author of the bot.", bot.bothandle.me.id));
 			
 			//admin only commands
 			
-			dpp::slashcommand homecommand("home", "(admin only) Changes the bot so that automatic updates are written to this channel.", bot.me.id);
+			dpp::slashcommand homecommand("home", "(admin only) Changes the bot so that automatic updates are written to this channel.", bot.bothandle.me.id);
 			homecommand.default_member_permissions = 0; //admin only
-			bot.global_command_create(homecommand);
+			bot.bothandle.global_command_create(homecommand);
 			
-			dpp::slashcommand changecommand("change", "Params: [ip], [port]; (admin only) Changes IP and port of server to display.", bot.me.id);
+			dpp::slashcommand changecommand("change", "Params: [ip], [port]; (admin only) Changes IP and port of server to display.", bot.bothandle.me.id);
 			changecommand.default_member_permissions = 0;
 			changecommand.add_option(dpp::command_option(dpp::co_string, "ip", "IP of the new server", true));
 			changecommand.add_option(dpp::command_option(dpp::co_integer, "port", "Port of the new server", true));
-			bot.global_command_create(changecommand);
+			bot.bothandle.global_command_create(changecommand);
 			
-			dpp::slashcommand enableaucommand("enableautoupdate", "(admin only) Enables automatic updates.", bot.me.id);
-			changecommand.default_member_permissions = 0;
-			bot.global_command_create(enableaucommand);
+			dpp::slashcommand enableaucommand("enableautoupdate", "(admin only) Enables automatic updates.", bot.bothandle.me.id);
+			enableaucommand.default_member_permissions = 0;
+			bot.bothandle.global_command_create(enableaucommand);
 			
-			dpp::slashcommand disableaucommand("disableautoupdate", "(admin only) Disables automatic updates.", bot.me.id);
-			changecommand.default_member_permissions = 0;
-			bot.global_command_create(disableaucommand);
+			dpp::slashcommand disableaucommand("disableautoupdate", "(admin only) Disables automatic updates.", bot.bothandle.me.id);
+			disableaucommand.default_member_permissions = 0;
+			bot.bothandle.global_command_create(disableaucommand);
 		}
 	});
 	
-	std::thread botthread([&](){ bot.start(dpp::st_wait); });
+	std::thread botthread([&](){ bot.bothandle.start(dpp::st_wait); });
 	
-	while(true) {
+	std::thread stopthread([&](){
+		char c;
+		while(programinfo.mainloop) {
+			std::cin >> c;
+			if(c == 'Q' || c == 'q') {
+				std::cout << "STOP key recieved.\n";
+				programinfo.mainloop = false;
+			}
+		}
+	});
+
+	uint32_t playersnow = 0;
+	uint32_t playersold = 0;
+	while(programinfo.mainloop) {
 		securesocket = asio::ssl::stream<asio::ip::tcp::socket>(iocontext, sslcontext);
 		SSL_set_tlsext_host_name(securesocket.native_handle(), "mcapi.us");
 		connect(securesocket, netendpoint);
@@ -322,18 +410,99 @@ int main(int argc, char **argv) {
 		programinfo.serverdata = json::parse(readbuf);
 		std::cout << "[NETWORK] Data reciveved and saved.\n";
 		
-		for(int i = 12; i > 0; i--) {
-			std::cout << "[NETWORK] Next data update in: "<< i * 5 << " s.\n";
-			std::this_thread::sleep_for(std::chrono::seconds(5));
+		if(bot.channelid) {
+			playersnow = programinfo.serverdata["players"]["now"].template get<uint32_t>();
+			if(!programinfo.oldserver.is_null()) {
+				playersold = programinfo.oldserver["players"]["now"].template get<uint32_t>();
+			}
+		}
+		else {
+			playersold = playersnow; //block if statement
+		}
+		
+		std::cout << "PN " << playersnow << "PO " << playersold << "\n";
+		if(playersnow != playersold) {
+			std::cout << "in if\n";
+			dpp::embed ebd;
+			ebd.set_title("Server update");
+			ebd.set_author(
+				"MCServerStatusBot by Martin/MegapolisPlayer",
+				"https://megapolisplayer.github.io", 
+				"https://megapolisplayer.github.io/assets/icons/favicon.png"
+			);
+			ebd.set_color(128);
+			
+			std::string playernamemsg;
+			
+			std::vector<std::string> playersoldv;
+			for(uint32_t i = 0; i < playersold; i++) {
+				std::cout << "O\n";
+				playersoldv.push_back(programinfo.oldserver["players"]["sample"][i]["name"].template get<std::string>());
+			}
+
+			std::vector<std::string> playersnowv;
+			for(uint32_t i = 0; i < playersnow; i++) {
+				std::cout << "N\n";
+				playersnowv.push_back(programinfo.serverdata["players"]["sample"][i]["name"].template get<std::string>());
+			}
+			
+			std::cout << "PNv " << playersnowv.size() << "POv " << playersoldv.size() << "\n";
+			
+			std::sort(playersoldv.begin(), playersoldv.end());
+			std::sort(playersnowv.begin(), playersnowv.end());
+			std::vector<std::string> playersdiff;
+			std::set_symmetric_difference(playersoldv.begin(), playersoldv.end(), playersnowv.begin(), playersnowv.end(), std::back_inserter(playersdiff));
+
+			std::cout << "PD " << playersdiff.size() << "\n";
+
+			for(uint32_t i = 0; i < playersdiff.size(); i++) {
+				playernamemsg += playersdiff[i];
+				if(i != playersdiff.size() - 1) {
+					playernamemsg += ", ";
+				}
+			}
+			
+			std::cout << "PNM " << playernamemsg << "\n";
+			
+			if(playersold < playersnow) {
+				ebd.set_description("New people have joined the server!\n");
+				ebd.add_field("Player(s) joined:", playernamemsg, false);
+			}
+			else if(playersold > playersnow) {
+				ebd.set_description("People have left the server!\n");
+				ebd.add_field("Player(s) left:", playernamemsg, false);
+			}
+			else {
+				//equal amount
+				ebd.set_description("Some people left, some joined.\n");
+				ebd.add_field("Player(s) online:", playernamemsg, false);
+			}
+			
+			bot.bothandle.message_create(dpp::message(bot.channelid, ebd));
+		}
+		
+		programinfo.oldserver = programinfo.serverdata;
+		
+		for(int i = API_UPDATE_TIME_S; i > 0; i--) {
+			if(!programinfo.mainloop) { goto ending; }
+			if(i % 10 == 0) {
+				std::cout << "[NETWORK] Next data update in: "<< i << " s.\n";
+			}
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
+	ending:
+	
+	std::cout << "Shutting down...\n";
 	
 	wg.reset(); //work groups do not block!
 	iocontext.stop();
 	contextthread.join();
 	
-	bot.shutdown();
+	bot.bothandle.shutdown();
 	botthread.join();
+	
+	stopthread.join();
 	
 	return 0;
 }
