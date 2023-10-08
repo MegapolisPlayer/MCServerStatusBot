@@ -36,6 +36,8 @@ static struct {
 	std::string serverport = "38170";
 	std::string bottoken = "";
 	
+	std::string webrequest;
+	
 	json oldserver;
 	json serverdata;
 	
@@ -135,6 +137,7 @@ static struct {
 namespace botresponse {
 	void serverinfo(const dpp::slashcommand_t& aevent) {
 		//get server information - all of it
+		std::cout << "[COMMANDS] /serverinfo was called.\n";
 		dpp::message msg;
 		dpp::embed ebd;
 		ebd.set_title("Server information");
@@ -176,6 +179,7 @@ namespace botresponse {
 	}
 	void status(const dpp::slashcommand_t& aevent) {
 		//get server status
+		std::cout << "[COMMANDS] /status was called.\n";
 		dpp::message msg;
 		dpp::embed ebd;
 		ebd.set_title("Server status");
@@ -201,6 +205,7 @@ namespace botresponse {
 	}
 	void players(const dpp::slashcommand_t& aevent) {
 		//get player amount and their names
+		std::cout << "[COMMANDS] /players was called.\n";
 		dpp::message msg;
 		dpp::embed ebd;
 		ebd.set_title("Player information");
@@ -234,6 +239,7 @@ namespace botresponse {
 	}
 	void help(const dpp::slashcommand_t& aevent) {
 		//send list of commands, in an embed
+		std::cout << "[COMMANDS] /help was called.\n";
 		dpp::message msg;
 		dpp::embed ebd;
 		ebd.set_title("Commands");
@@ -265,6 +271,7 @@ namespace botresponse {
 	}
 	void credits(const dpp::slashcommand_t& aevent) {
 		//send embed with credits
+		std::cout << "[COMMANDS] /credits was called.\n";
 		dpp::message msg;
 		dpp::embed ebd;
 		ebd.set_title("Author");
@@ -284,6 +291,7 @@ namespace botresponse {
 	
 	void home(const dpp::slashcommand_t& aevent) {
 		//set this channel to home channel, admin only
+		std::cout << "[COMMANDS] /home was called.\n";
 		bot.channelid = aevent.command.channel_id;
 		
 		dpp::channel homechannel = bot.bothandle.channel_get_sync(bot.channelid);
@@ -291,18 +299,23 @@ namespace botresponse {
 		aevent.reply(dpp::message("Channel " + homechannel.name + " is now the home channel.").set_flags(dpp::m_ephemeral));
 	}
 	void change(const dpp::slashcommand_t& aevent) {
-		//changes the server IP and port, admin only
+		//changes the server IP and port, admin only, TODO: finish
+		std::cout << "[COMMANDS] /chnage [ip] [port] was called.\n";
 		
 		programinfo.serverip = std::get<std::string>(aevent.get_parameter("ip"));
 		programinfo.serverport = std::get<std::string>(aevent.get_parameter("port"));
 		
+		programinfo.webrequest = makerequest();
+		
 		aevent.reply(dpp::message("IP and port changed.\nIP is now " + programinfo.serverip + " and the port is now " + programinfo.serverport).set_flags(dpp::m_ephemeral));
 	}
 	void enableautoupdate(const dpp::slashcommand_t& aevent) {
+		std::cout << "[COMMANDS] /enableautoupdate was called.\n";
 		bot.autoenabled = true; 
 		aevent.reply(dpp::message("Automatic updates enabled.").set_flags(dpp::m_ephemeral));
 	}
 	void disableautoupdate(const dpp::slashcommand_t& aevent) {
+		std::cout << "[COMMANDS] /disableautoupdate was called.\n";
 		bot.autoenabled = false; 
 		aevent.reply(dpp::message("Automatic updates disabled.").set_flags(dpp::m_ephemeral));
 	}
@@ -331,7 +344,7 @@ int main(int argc, char **argv) {
 	asio::ip::tcp::endpoint netendpoint;
 	DNSresolve(&netendpoint, iocontext);
 	
-	std::string webrequest = makerequest();
+	programinfo.webrequest = makerequest();
 	
 	bot.bothandle.on_log(dpp::utility::cout_logger());
 	
@@ -403,12 +416,12 @@ int main(int argc, char **argv) {
 		readbuf.clear();
 		resetreadnetdata();
 		readnetdata(securesocket);
-		securesocket.write_some(asio::buffer(webrequest.data(), webrequest.size()), ec);
+		securesocket.write_some(asio::buffer(programinfo.webrequest.data(), programinfo.webrequest.size()), ec);
 		while(isdone == false) {}
 		
 		std::cout << "Read " << readbuf.size() << " bytes in total.\n";
 		programinfo.serverdata = json::parse(readbuf);
-		std::cout << "[NETWORK] Data reciveved and saved.\n";
+		std::cout << "[NETWORK] Data recieved and saved.\n";
 		
 		if(bot.channelid) {
 			playersnow = programinfo.serverdata["players"]["now"].template get<uint32_t>();
@@ -420,9 +433,7 @@ int main(int argc, char **argv) {
 			playersold = playersnow; //block if statement
 		}
 		
-		std::cout << "PN " << playersnow << "PO " << playersold << "\n";
 		if(playersnow != playersold) {
-			std::cout << "in if\n";
 			dpp::embed ebd;
 			ebd.set_title("Server update");
 			ebd.set_author(
@@ -436,24 +447,18 @@ int main(int argc, char **argv) {
 			
 			std::vector<std::string> playersoldv;
 			for(uint32_t i = 0; i < playersold; i++) {
-				std::cout << "O\n";
 				playersoldv.push_back(programinfo.oldserver["players"]["sample"][i]["name"].template get<std::string>());
 			}
 
 			std::vector<std::string> playersnowv;
 			for(uint32_t i = 0; i < playersnow; i++) {
-				std::cout << "N\n";
 				playersnowv.push_back(programinfo.serverdata["players"]["sample"][i]["name"].template get<std::string>());
 			}
-			
-			std::cout << "PNv " << playersnowv.size() << "POv " << playersoldv.size() << "\n";
-			
+						
 			std::sort(playersoldv.begin(), playersoldv.end());
 			std::sort(playersnowv.begin(), playersnowv.end());
 			std::vector<std::string> playersdiff;
 			std::set_symmetric_difference(playersoldv.begin(), playersoldv.end(), playersnowv.begin(), playersnowv.end(), std::back_inserter(playersdiff));
-
-			std::cout << "PD " << playersdiff.size() << "\n";
 
 			for(uint32_t i = 0; i < playersdiff.size(); i++) {
 				playernamemsg += playersdiff[i];
@@ -462,8 +467,6 @@ int main(int argc, char **argv) {
 				}
 			}
 			
-			std::cout << "PNM " << playernamemsg << "\n";
-			
 			if(playersold < playersnow) {
 				ebd.set_description("New people have joined the server!\n");
 				ebd.add_field("Player(s) joined:", playernamemsg, false);
@@ -471,11 +474,6 @@ int main(int argc, char **argv) {
 			else if(playersold > playersnow) {
 				ebd.set_description("People have left the server!\n");
 				ebd.add_field("Player(s) left:", playernamemsg, false);
-			}
-			else {
-				//equal amount
-				ebd.set_description("Some people left, some joined.\n");
-				ebd.add_field("Player(s) online:", playernamemsg, false);
 			}
 			
 			bot.bothandle.message_create(dpp::message(bot.channelid, ebd));
@@ -486,7 +484,7 @@ int main(int argc, char **argv) {
 		for(int i = API_UPDATE_TIME_S; i > 0; i--) {
 			if(!programinfo.mainloop) { goto ending; }
 			if(i % 10 == 0) {
-				std::cout << "[NETWORK] Next data update in: "<< i << " s.\n";
+				std::cout << "[NETWORK] Next data update in: "<< i << "s.\n";
 			}
 			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
