@@ -3,6 +3,11 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="network.cpp"/>
+    <File Name="botresponses.cpp"/>
+    <File Name="network.hpp"/>
+    <File Name="botresponses.hpp"/>
+    <File Name="include.hpp"/>
     <File Name="main.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">

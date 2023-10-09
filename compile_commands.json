@@ -2,4 +2,24 @@
   "file": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/main.cpp",
   "directory": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot",
   "command": "/bin/clang++ -c /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/main.cpp -o /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/main.cpp.o -target x86_64-pc-linux-gnu -I/include/c++/12 -I/include/x86_64-linux-gnu/c++/12 -I/include/c++/12/backward -I/usr/lib/llvm-14/lib/clang/14.0.0/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include -I. -I/home/mart/Dev/MCServerStatusBot/depend/ -I.  -std=c++20  -gdwarf-2  -O0  -Wall"
+ }, {
+  "file": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/include.hpp",
+  "directory": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot",
+  "command": "/bin/clang++ -c /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/include.hpp -o /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/include.hpp.o -target x86_64-pc-linux-gnu -I/include/c++/12 -I/include/x86_64-linux-gnu/c++/12 -I/include/c++/12/backward -I/usr/lib/llvm-14/lib/clang/14.0.0/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include -I. -I/home/mart/Dev/MCServerStatusBot/depend/ -I.  -std=c++20  -gdwarf-2  -O0  -Wall"
+ }, {
+  "file": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/botresponses.hpp",
+  "directory": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot",
+  "command": "/bin/clang++ -c /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/botresponses.hpp -o /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/botresponses.hpp.o -target x86_64-pc-linux-gnu -I/include/c++/12 -I/include/x86_64-linux-gnu/c++/12 -I/include/c++/12/backward -I/usr/lib/llvm-14/lib/clang/14.0.0/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include -I. -I/home/mart/Dev/MCServerStatusBot/depend/ -I.  -std=c++20  -gdwarf-2  -O0  -Wall"
+ }, {
+  "file": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/network.hpp",
+  "directory": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot",
+  "command": "/bin/clang++ -c /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/network.hpp -o /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/network.hpp.o -target x86_64-pc-linux-gnu -I/include/c++/12 -I/include/x86_64-linux-gnu/c++/12 -I/include/c++/12/backward -I/usr/lib/llvm-14/lib/clang/14.0.0/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include -I. -I/home/mart/Dev/MCServerStatusBot/depend/ -I.  -std=c++20  -gdwarf-2  -O0  -Wall"
+ }, {
+  "file": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/botresponses.cpp",
+  "directory": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot",
+  "command": "/bin/clang++ -c /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/botresponses.cpp -o /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/botresponses.cpp.o -target x86_64-pc-linux-gnu -I/include/c++/12 -I/include/x86_64-linux-gnu/c++/12 -I/include/c++/12/backward -I/usr/lib/llvm-14/lib/clang/14.0.0/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include -I. -I/home/mart/Dev/MCServerStatusBot/depend/ -I.  -std=c++20  -gdwarf-2  -O0  -Wall"
+ }, {
+  "file": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/network.cpp",
+  "directory": "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot",
+  "command": "/bin/clang++ -c /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/network.cpp -o /home/mart/Dev/MCServerStatusBot/MCServerStatusBot/network.cpp.o -target x86_64-pc-linux-gnu -I/include/c++/12 -I/include/x86_64-linux-gnu/c++/12 -I/include/c++/12/backward -I/usr/lib/llvm-14/lib/clang/14.0.0/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include -I. -I/home/mart/Dev/MCServerStatusBot/depend/ -I.  -std=c++20  -gdwarf-2  -O0  -Wall"
  }]
