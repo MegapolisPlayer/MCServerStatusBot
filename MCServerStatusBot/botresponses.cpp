@@ -1,5 +1,9 @@
 #include "botresponses.hpp"
 
+dpp::cluster bottype::bothandle = dpp::cluster(
+	"" //add bot token here!
+);
+
 bottype bot;
 
 void sendautomsg() {
@@ -62,6 +66,14 @@ void sendautomsg() {
 
 namespace botresponse {
 	void serverinfo(const dpp::slashcommand_t& aevent) {
+		//aevent.command.guild_id;
+		//
+		//TODO
+		//--
+		//-get guild ID of event command
+		//-find in unordered map
+		//-get info from relevant JSON in programinfotype struct
+		
 		//get server information - all of it
 		std::cout << "[COMMANDS] /serverinfo was called.\n";
 		if(programinfo.serverdata.is_null()) { return; }
@@ -281,9 +293,11 @@ void initbot() {
 		}
 	});
 	bot.bothandle.on_guild_create([&](const dpp::guild_create_t& event) {
+		programinfos.emplace(std::make_pair(event.created->id, programinfotype{}));
 		std::cout << "[SERVER] Bot added to server " + event.created->name + ".\n";
 	});
 	bot.bothandle.on_guild_delete([&](const dpp::guild_delete_t& event) {
+		programinfos.erase(programinfos.find(event.deleted->id));
 		std::cout << "[SERVER] Bot removed from server " + event.deleted->name + ".\n";
 	});
 	

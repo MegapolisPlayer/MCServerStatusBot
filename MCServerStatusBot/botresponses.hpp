@@ -4,7 +4,8 @@
 #include "network.hpp"
 
 struct bottype {
-	dpp::cluster bothandle = dpp::cluster(programinfo.bottoken);
+	static dpp::cluster bothandle;
+	
 	dpp::snowflake channelid = 0;
 	bool autoenabled = false;
 	

@@ -42,6 +42,12 @@ int main(int argc, char **argv) {
 	});
 
 	while(programinfo.mainloop) {
+		//TODO:
+		//run for each entry in guild
+		//if server not set - skip
+		//get json info
+		//then wait 120s
+		
 		securesocket = asio::ssl::stream<asio::ip::tcp::socket>(iocontext, sslcontext);
 		SSL_set_tlsext_host_name(securesocket.native_handle(), "mcapi.us");
 		connect(securesocket, netendpoint);

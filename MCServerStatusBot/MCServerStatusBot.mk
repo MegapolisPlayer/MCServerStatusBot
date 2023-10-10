@@ -14,7 +14,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=mart
-Date                   :=09/10/23
+Date                   :=10/10/23
 CodeLitePath           :=/home/mart/.codelite
 MakeDirCommand         :=mkdir -p
 LinkerName             :=/bin/clang++
@@ -62,7 +62,7 @@ AS       := /bin/as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/network.cpp$(ObjectSuffix) $(IntermediateDirectory)/botresponses.cpp$(ObjectSuffix) $(IntermediateDirectory)/main.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/botresponses.cpp$(ObjectSuffix) $(IntermediateDirectory)/network.cpp$(ObjectSuffix) 
 
 
 
@@ -93,13 +93,13 @@ PreBuild:
 ##
 ## Objects
 ##
-$(IntermediateDirectory)/network.cpp$(ObjectSuffix): network.cpp $(IntermediateDirectory)/network.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/network.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/network.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/network.cpp$(DependSuffix): network.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/network.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/network.cpp$(DependSuffix) -MM network.cpp
+$(IntermediateDirectory)/main.cpp$(ObjectSuffix): main.cpp $(IntermediateDirectory)/main.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/main.cpp$(DependSuffix): main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/main.cpp$(DependSuffix) -MM main.cpp
 
-$(IntermediateDirectory)/network.cpp$(PreprocessSuffix): network.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/network.cpp$(PreprocessSuffix) network.cpp
+$(IntermediateDirectory)/main.cpp$(PreprocessSuffix): main.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/main.cpp$(PreprocessSuffix) main.cpp
 
 $(IntermediateDirectory)/botresponses.cpp$(ObjectSuffix): botresponses.cpp $(IntermediateDirectory)/botresponses.cpp$(DependSuffix)
 	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/botresponses.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/botresponses.cpp$(ObjectSuffix) $(IncludePath)
@@ -109,13 +109,13 @@ $(IntermediateDirectory)/botresponses.cpp$(DependSuffix): botresponses.cpp
 $(IntermediateDirectory)/botresponses.cpp$(PreprocessSuffix): botresponses.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/botresponses.cpp$(PreprocessSuffix) botresponses.cpp
 
-$(IntermediateDirectory)/main.cpp$(ObjectSuffix): main.cpp $(IntermediateDirectory)/main.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/main.cpp$(DependSuffix): main.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/main.cpp$(DependSuffix) -MM main.cpp
+$(IntermediateDirectory)/network.cpp$(ObjectSuffix): network.cpp $(IntermediateDirectory)/network.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/mart/Dev/MCServerStatusBot/MCServerStatusBot/network.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/network.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/network.cpp$(DependSuffix): network.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/network.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/network.cpp$(DependSuffix) -MM network.cpp
 
-$(IntermediateDirectory)/main.cpp$(PreprocessSuffix): main.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/main.cpp$(PreprocessSuffix) main.cpp
+$(IntermediateDirectory)/network.cpp$(PreprocessSuffix): network.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/network.cpp$(PreprocessSuffix) network.cpp
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

@@ -6,7 +6,6 @@
 struct programinfotype {
 	std::string serverip = "witch.hostify.cz";
 	std::string serverport = "38170";
-	std::string bottoken = "";
 	
 	std::string webrequest;
 	
@@ -15,6 +14,8 @@ struct programinfotype {
 	
 	bool mainloop = true;
 };
+
+extern std::unordered_map<dpp::snowflake, programinfotype> programinfos;
 
 extern programinfotype programinfo;
 

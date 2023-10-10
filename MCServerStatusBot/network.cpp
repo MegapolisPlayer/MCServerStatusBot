@@ -1,6 +1,8 @@
 #include "network.hpp"
 
-programinfotype programinfo;
+std::unordered_map<dpp::snowflake, programinfotype> programinfos;
+
+programinfotype programinfo; //temp
 
 void DNSresolve(asio::ip::tcp::endpoint* aendpoint, asio::io_context& acontext) {
 	asio::error_code ec;
