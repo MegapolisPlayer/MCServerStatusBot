@@ -12,9 +12,11 @@ struct bottype {
 	std::thread botthread;
 };
 
+extern std::unordered_map<dpp::snowflake, bottype> bots;
+
 extern bottype bot;
 
-void sendautomsg();
+void sendautomsg(dpp::snowflake aguildid);
 
 namespace botresponse {
 	void serverinfo(const dpp::slashcommand_t& aevent);

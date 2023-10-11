@@ -1,8 +1,8 @@
 #include "network.hpp"
 
-std::unordered_map<dpp::snowflake, programinfotype> programinfos;
+bool programinfotype::mainloop = true;
 
-programinfotype programinfo; //temp
+std::unordered_map<dpp::snowflake, programinfotype> programinfos;
 
 void DNSresolve(asio::ip::tcp::endpoint* aendpoint, asio::io_context& acontext) {
 	asio::error_code ec;
@@ -24,17 +24,17 @@ void connect(asio::ssl::stream<asio::ip::tcp::socket>& asocket, asio::ip::tcp::e
 	else { std::cout << "Handshake failure: " + ec.message() + "\n"; exit(-1); }
 }
 
-std::string makerequest() {
-	if(programinfo.serverport.empty()) {
+std::string makerequest(dpp::snowflake aguildid) {
+	if(programinfos.at(aguildid).serverport.empty()) {
 		return 
-			"GET /server/status?ip=" + programinfo.serverip + " HTTP/1.1\r\n"
+			"GET /server/status?ip=" + programinfos.at(aguildid).serverip + " HTTP/1.1\r\n"
 			"Host: mcapi.us\r\n"
 			"User-Agent: Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\r\n" //otherwise cloudflare blocks...
 			"Connection: close\r\n\r\n";
 	}
 	else {
 		return 
-			"GET /server/status?ip=" + programinfo.serverip + "&port=" + programinfo.serverport + " HTTP/1.1\r\n"
+			"GET /server/status?ip=" + programinfos.at(aguildid).serverip + "&port=" + programinfos.at(aguildid).serverport + " HTTP/1.1\r\n"
 			"Host: mcapi.us\r\n"
 			"User-Agent: Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\r\n" //otherwise cloudflare blocks...
 			"Connection: close\r\n\r\n";

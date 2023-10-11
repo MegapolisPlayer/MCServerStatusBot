@@ -4,17 +4,19 @@ dpp::cluster bottype::bothandle = dpp::cluster(
 	"" //add bot token here!
 );
 
+std::unordered_map<dpp::snowflake, bottype> bots;
+
 bottype bot;
 
-void sendautomsg() {
+void sendautomsg(dpp::snowflake aguildid) {
 	uint32_t playersnow = 0;
 	uint32_t playersold = 0;
 	
 	//port can be empty
-	if(bot.channelid && !programinfo.serverip.empty()) {
-		playersnow = programinfo.serverdata["players"]["now"].template get<uint32_t>();
-		if(!programinfo.oldserver.is_null()) {
-			playersold = programinfo.oldserver["players"]["now"].template get<uint32_t>();
+	if(bot.channelid && !programinfos.at(aguildid).serverip.empty()) {
+		playersnow = programinfos.at(aguildid).serverdata["players"]["now"].template get<uint32_t>();
+		if(!programinfos.at(aguildid).oldserver.is_null()) {
+			playersold = programinfos.at(aguildid).oldserver["players"]["now"].template get<uint32_t>();
 		}
 	}
 	else {
@@ -31,12 +33,12 @@ void sendautomsg() {
 		
 		std::vector<std::string> playersoldv;
 		for(uint32_t i = 0; i < playersold; i++) {
-			playersoldv.push_back(programinfo.oldserver["players"]["sample"][i]["name"].template get<std::string>());
+			playersoldv.push_back(programinfos.at(aguildid).oldserver["players"]["sample"][i]["name"].template get<std::string>());
 		}
 
 		std::vector<std::string> playersnowv;
 		for(uint32_t i = 0; i < playersnow; i++) {
-			playersnowv.push_back(programinfo.serverdata["players"]["sample"][i]["name"].template get<std::string>());
+			playersnowv.push_back(programinfos.at(aguildid).serverdata["players"]["sample"][i]["name"].template get<std::string>());
 		}
 					
 		std::sort(playersoldv.begin(), playersoldv.end());
@@ -76,7 +78,10 @@ namespace botresponse {
 		
 		//get server information - all of it
 		std::cout << "[COMMANDS] /serverinfo was called.\n";
-		if(programinfo.serverdata.is_null()) { return; }
+		if(programinfos.at(aevent.command.guild_id).serverdata.is_null()) {
+			aevent.reply(dpp::message("No server information available yet").set_flags(dpp::m_ephemeral));
+			return;
+		}
 		
 		dpp::message msg;
 		dpp::embed ebd;
@@ -85,22 +90,22 @@ namespace botresponse {
 		ebd.set_author(EMBED_AUTHOR_STRING);
 		ebd.set_color(128);
 		
-		if(programinfo.serverdata["online"].template get<bool>() == false) {
+		if(programinfos.at(aevent.command.guild_id).serverdata["online"].template get<bool>() == false) {
 			//server offline
 			ebd.add_field("Server offline!", "This server is currently offline.", true);
 			msg.add_embed(ebd); aevent.reply(msg); return;
 		}
 		
-		ebd.add_field("Name of Server", programinfo.serverdata["server"]["name"], true);
-		ebd.add_field("Online", ((programinfo.serverdata["online"].template get<bool>() == true) ? "Yes" : "No"), true);
-		ebd.add_field("Message", programinfo.serverdata["motd"], true);
+		ebd.add_field("Name of Server", programinfos.at(aevent.command.guild_id).serverdata["server"]["name"], true);
+		ebd.add_field("Online", ((programinfos.at(aevent.command.guild_id).serverdata["online"].template get<bool>() == true) ? "Yes" : "No"), true);
+		ebd.add_field("Message", programinfos.at(aevent.command.guild_id).serverdata["motd"], true);
 		
-		uint32_t playersnow = programinfo.serverdata["players"]["now"].template get<uint32_t>();
+		uint32_t playersnow = programinfos.at(aevent.command.guild_id).serverdata["players"]["now"].template get<uint32_t>();
 		ebd.add_field("Current Players", std::to_string(playersnow), true);
-		ebd.add_field("Maximum Players", std::to_string(programinfo.serverdata["players"]["max"].template get<uint32_t>()), true);
+		ebd.add_field("Maximum Players", std::to_string(programinfos.at(aevent.command.guild_id).serverdata["players"]["max"].template get<uint32_t>()), true);
 		
 		std::string playernamemsg;
-		json playersnames = programinfo.serverdata["players"]["sample"];
+		json playersnames = programinfos.at(aevent.command.guild_id).serverdata["players"]["sample"];
 			
 		for(uint32_t i = 0; i < playersnow; i++) {
 			playernamemsg += playersnames[i]["name"].template get<std::string>();
@@ -116,7 +121,10 @@ namespace botresponse {
 	void status(const dpp::slashcommand_t& aevent) {
 		//get server status
 		std::cout << "[COMMANDS] /status was called.\n";
-		if(programinfo.serverdata.is_null()) { return; }
+		if(programinfos.at(aevent.command.guild_id).serverdata.is_null()) {
+			aevent.reply(dpp::message("No server information available yet").set_flags(dpp::m_ephemeral));
+			return;
+		}
 		
 		dpp::message msg;
 		dpp::embed ebd;
@@ -125,14 +133,14 @@ namespace botresponse {
 		ebd.set_author(EMBED_AUTHOR_STRING);
 		ebd.set_color(128);
 		
-		if(programinfo.serverdata["online"].template get<bool>() == false) {
+		if(programinfos.at(aevent.command.guild_id).serverdata["online"].template get<bool>() == false) {
 			ebd.add_field("Server offline!", "This server is currently offline.", true);
 			msg.add_embed(ebd);	aevent.reply(msg); return;
 		}
 		
-		ebd.add_field("Name of Server", programinfo.serverdata["server"]["name"], true);
-		ebd.add_field("Online", ((programinfo.serverdata["online"].template get<bool>() == true) ? "Yes" : "No"), true);
-		ebd.add_field("Message", programinfo.serverdata["motd"], true);
+		ebd.add_field("Name of Server", programinfos.at(aevent.command.guild_id).serverdata["server"]["name"], true);
+		ebd.add_field("Online", ((programinfos.at(aevent.command.guild_id).serverdata["online"].template get<bool>() == true) ? "Yes" : "No"), true);
+		ebd.add_field("Message", programinfos.at(aevent.command.guild_id).serverdata["motd"], true);
 		
 		msg.add_embed(ebd);
 		aevent.reply(msg);
@@ -140,7 +148,7 @@ namespace botresponse {
 	void players(const dpp::slashcommand_t& aevent) {
 		//get player amount and their names
 		std::cout << "[COMMANDS] /players was called.\n";
-		if(programinfo.serverdata.is_null()) { return; }
+		if(programinfos.at(aevent.command.guild_id).serverdata.is_null()) { return; }
 		
 		dpp::message msg;
 		dpp::embed ebd;
@@ -149,12 +157,12 @@ namespace botresponse {
 		ebd.set_author(EMBED_AUTHOR_STRING);
 		ebd.set_color(128);
 		
-		uint32_t playersnow = programinfo.serverdata["players"]["now"].template get<uint32_t>();
+		uint32_t playersnow = programinfos.at(aevent.command.guild_id).serverdata["players"]["now"].template get<uint32_t>();
 		ebd.add_field("Current Players", std::to_string(playersnow), true);
-		ebd.add_field("Maximum Players", std::to_string(programinfo.serverdata["players"]["max"].template get<uint32_t>()), true);
+		ebd.add_field("Maximum Players", std::to_string(programinfos.at(aevent.command.guild_id).serverdata["players"]["max"].template get<uint32_t>()), true);
 		
 		std::string playernamemsg;
-		json playersnames = programinfo.serverdata["players"]["sample"];
+		json playersnames = programinfos.at(aevent.command.guild_id).serverdata["players"]["sample"];
 			
 		for(uint32_t i = 0; i < playersnow; i++) {
 			playernamemsg += playersnames[i]["name"].template get<std::string>();
@@ -223,15 +231,20 @@ namespace botresponse {
 		aevent.reply(dpp::message("Channel " + homechannel.name + " is now the home channel.").set_flags(dpp::m_ephemeral));
 	}
 	void change(const dpp::slashcommand_t& aevent) {
-		//changes the server IP and port, admin only, TODO: finish
-		std::cout << "[COMMANDS] /chnage [ip] [port] was called.\n";
+		//changes the server IP and port, admin only
+		std::cout << "[COMMANDS] /change [ip] [port] was called.\n";
 		
-		programinfo.serverip = std::get<std::string>(aevent.get_parameter("ip"));
-		programinfo.serverport = std::get<std::string>(aevent.get_parameter("port"));
+		programinfos.at(aevent.command.guild_id).serverip = std::get<std::string>(aevent.get_parameter("ip"));
+		std::cout << "[COMMANDS] /change IP read\n";
 		
-		programinfo.webrequest = makerequest();
+		if(aevent.command.get_command_interaction().options.size() > 1) {
+			programinfos.at(aevent.command.guild_id).serverport = std::get<std::string>(aevent.get_parameter("port")); //TODO: fix!
+		}
+		std::cout << "[COMMANDS] /change port read\n";
 		
-		aevent.reply(dpp::message("IP and port changed.\nIP is now " + programinfo.serverip + " and the port is now " + programinfo.serverport).set_flags(dpp::m_ephemeral));
+		programinfos.at(aevent.command.guild_id).webrequest = makerequest(aevent.command.guild_id);
+		
+		aevent.reply(dpp::message("IP and port changed.\nIP is now " + programinfos.at(aevent.command.guild_id).serverip + " and the port is now " + programinfos.at(aevent.command.guild_id).serverport).set_flags(dpp::m_ephemeral));
 	}
 	void enableautoupdate(const dpp::slashcommand_t& aevent) {
 		std::cout << "[COMMANDS] /enableautoupdate was called.\n";
@@ -246,8 +259,14 @@ namespace botresponse {
 }
 
 void initbot() {
+	bot.bothandle.global_commands_get([&](const dpp::confirmation_callback_t& aconcl){
+		for(auto& [key, command] : std::get<dpp::slashcommand_map>(aconcl.value)) {
+			bot.bothandle.global_command_delete(command.id);
+		};
+	});
+	
 	bot.bothandle.on_log(dpp::utility::cout_logger());
-		
+	
 	bot.bothandle.on_slashcommand([&](const dpp::slashcommand_t& event) {
 		if (event.command.get_command_name() == "serverinfo") { botresponse::serverinfo(event); return; }
 		if (event.command.get_command_name() == "status") { botresponse::status(event); return; }
@@ -280,7 +299,7 @@ void initbot() {
 			dpp::slashcommand changecommand("change", "Params: [ip], [port]; (admin only) Changes IP and port of server to display.", bot.bothandle.me.id);
 			changecommand.default_member_permissions = 0;
 			changecommand.add_option(dpp::command_option(dpp::co_string, "ip", "IP of the new server", true));
-			changecommand.add_option(dpp::command_option(dpp::co_integer, "port", "Port of the new server", true));
+			changecommand.add_option(dpp::command_option(dpp::co_integer, "port", "Port of the new server", false));
 			bot.bothandle.global_command_create(changecommand);
 			
 			dpp::slashcommand enableaucommand("enableautoupdate", "(admin only) Enables automatic updates.", bot.bothandle.me.id);
@@ -294,10 +313,12 @@ void initbot() {
 	});
 	bot.bothandle.on_guild_create([&](const dpp::guild_create_t& event) {
 		programinfos.emplace(std::make_pair(event.created->id, programinfotype{}));
+		bots.emplace(std::make_pair(event.created->id, bottype{}));
 		std::cout << "[SERVER] Bot added to server " + event.created->name + ".\n";
 	});
 	bot.bothandle.on_guild_delete([&](const dpp::guild_delete_t& event) {
 		programinfos.erase(programinfos.find(event.deleted->id));
+		bots.erase(bots.find(event.deleted->id));
 		std::cout << "[SERVER] Bot removed from server " + event.deleted->name + ".\n";
 	});
 	
