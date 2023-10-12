@@ -9,12 +9,10 @@ struct bottype {
 	dpp::snowflake channelid = 0;
 	bool autoenabled = false;
 	
-	std::thread botthread;
+	static std::thread botthread;
 };
 
 extern std::unordered_map<dpp::snowflake, bottype> bots;
-
-extern bottype bot;
 
 void sendautomsg(dpp::snowflake aguildid);
 

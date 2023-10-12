@@ -2,10 +2,10 @@
 ## Auto Generated makefile by CodeLite IDE
 ## any manual changes will be erased      
 ##
-## Debug
+## Release
 ProjectName            :=MCServerStatusBot
-ConfigurationName      :=Debug
-WorkspaceConfiguration :=Debug
+ConfigurationName      :=Release
+WorkspaceConfiguration :=Release
 WorkspacePath          :=/home/mart/Dev/MCServerStatusBot
 ProjectPath            :=/home/mart/Dev/MCServerStatusBot/MCServerStatusBot
 IntermediateDirectory  :=../build-$(WorkspaceConfiguration)/MCServerStatusBot
@@ -14,7 +14,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=mart
-Date                   :=11/10/23
+Date                   :=13/10/23
 CodeLitePath           :=/home/mart/.codelite
 MakeDirCommand         :=mkdir -p
 LinkerName             :=/bin/clang++
@@ -31,7 +31,7 @@ PreprocessorSwitch     :=-D
 SourceSwitch           :=-c 
 OutputDirectory        :=/home/mart/Dev/MCServerStatusBot/build-$(WorkspaceConfiguration)/bin
 OutputFile             :=../build-$(WorkspaceConfiguration)/bin/$(ProjectName)
-Preprocessors          :=
+Preprocessors          :=$(PreprocessorSwitch)NDEBUG 
 ObjectSwitch           :=-o 
 ArchiveOutputSwitch    := 
 PreprocessOnlySwitch   :=-E
@@ -52,8 +52,8 @@ LibPath                := $(LibraryPathSwitch).
 AR       := /bin/ar rcu
 CXX      := /bin/clang++
 CC       := /bin/clang
-CXXFLAGS := -std=c++20 -gdwarf-2 -O0 -Wall $(Preprocessors)
-CFLAGS   := -std=c++20 -gdwarf-2 -O0 -Wall $(Preprocessors)
+CXXFLAGS := -std=c++20 -O2 -Wall $(Preprocessors)
+CFLAGS   := -std=c++20 -O2 -Wall $(Preprocessors)
 ASFLAGS  := 
 AS       := /bin/as
 

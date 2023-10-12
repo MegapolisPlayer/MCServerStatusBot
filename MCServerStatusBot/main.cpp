@@ -1,7 +1,7 @@
 #include "botresponses.hpp" //includes other stuff
 
 int main(int argc, char **argv) {
-	std::cout << "MC Server Status Discord Bot\n(c) Martin/MegapolisPlater, 2023\nPress q/Q and ENTER to exit.\n";
+	std::cout << "MC Server Status Discord Bot\n(c) Martin/MegapolisPlater, 2023\nPress q/Q and ENTER to exit.\nExit after the shards have started.\n";
 	
 	initbot();
 	
@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
 	DNSresolve(&netendpoint, iocontext);
 	
 	std::thread stopthread([&](){
+		std::cout << "STOP key reciever active. Wait for shard start.\n";
 		char c;
 		while(programinfotype::mainloop) {
 			std::cin >> c;
@@ -29,7 +30,7 @@ int main(int argc, char **argv) {
 			}
 		}
 	});
-
+	
 	while(programinfotype::mainloop) {
 		for(auto& [key, programinfo] : programinfos) {
 			if(programinfo.serverip.empty()) { 
@@ -72,8 +73,8 @@ int main(int argc, char **argv) {
 	iocontext.stop();
 	contextthread.join();
 	
-	bot.bothandle.shutdown();
-	if(bot.botthread.joinable()) { bot.botthread.join(); }
+	bottype::bothandle.shutdown();
+	if(bottype::botthread.joinable()) { bottype::botthread.join(); }
 	
 	if(stopthread.joinable()) { stopthread.join(); }
 	

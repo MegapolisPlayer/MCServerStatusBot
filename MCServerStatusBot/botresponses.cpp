@@ -1,19 +1,18 @@
 #include "botresponses.hpp"
 
 dpp::cluster bottype::bothandle = dpp::cluster(
-	"" //add bot token here!
+	"" //TODO: add bot token here! ATTN
 );
+std::thread bottype::botthread;
 
 std::unordered_map<dpp::snowflake, bottype> bots;
-
-bottype bot;
 
 void sendautomsg(dpp::snowflake aguildid) {
 	uint32_t playersnow = 0;
 	uint32_t playersold = 0;
 	
 	//port can be empty
-	if(bot.channelid && !programinfos.at(aguildid).serverip.empty()) {
+	if(bots.at(aguildid).channelid && !programinfos.at(aguildid).serverip.empty()) {
 		playersnow = programinfos.at(aguildid).serverdata["players"]["now"].template get<uint32_t>();
 		if(!programinfos.at(aguildid).oldserver.is_null()) {
 			playersold = programinfos.at(aguildid).oldserver["players"]["now"].template get<uint32_t>();
@@ -62,24 +61,17 @@ void sendautomsg(dpp::snowflake aguildid) {
 			ebd.add_field("Player(s) left:", playernamemsg, false);
 		}
 		
-		bot.bothandle.message_create(dpp::message(bot.channelid, ebd));
+		bottype::bothandle.message_create(dpp::message(bots.at(aguildid).channelid, ebd));
 	}
 }
 
 namespace botresponse {
 	void serverinfo(const dpp::slashcommand_t& aevent) {
-		//aevent.command.guild_id;
-		//
-		//TODO
-		//--
-		//-get guild ID of event command
-		//-find in unordered map
-		//-get info from relevant JSON in programinfotype struct
-		
 		//get server information - all of it
-		std::cout << "[COMMANDS] /serverinfo was called.\n";
+		std::cout << "[COMMANDS] /serverinfo was called on server " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
 		if(programinfos.at(aevent.command.guild_id).serverdata.is_null()) {
 			aevent.reply(dpp::message("No server information available yet").set_flags(dpp::m_ephemeral));
+			std::cout << "[COMMANDS] /serverinfo returned - NO SERVER INFO AVAILABLE.\n";
 			return;
 		}
 		
@@ -120,9 +112,10 @@ namespace botresponse {
 	}
 	void status(const dpp::slashcommand_t& aevent) {
 		//get server status
-		std::cout << "[COMMANDS] /status was called.\n";
+		std::cout << "[COMMANDS] /status was called on server " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
 		if(programinfos.at(aevent.command.guild_id).serverdata.is_null()) {
 			aevent.reply(dpp::message("No server information available yet").set_flags(dpp::m_ephemeral));
+			std::cout << "[COMMANDS] /status returned - NO SERVER INFO AVAILABLE.\n";
 			return;
 		}
 		
@@ -147,8 +140,12 @@ namespace botresponse {
 	}
 	void players(const dpp::slashcommand_t& aevent) {
 		//get player amount and their names
-		std::cout << "[COMMANDS] /players was called.\n";
-		if(programinfos.at(aevent.command.guild_id).serverdata.is_null()) { return; }
+		std::cout << "[COMMANDS] /players was called on server " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
+		if(programinfos.at(aevent.command.guild_id).serverdata.is_null()) { 
+			aevent.reply(dpp::message("No server information available yet").set_flags(dpp::m_ephemeral));
+			std::cout << "[COMMANDS] /players returned - NO SERVER INFO AVAILABLE.\n";
+			return;
+		}
 		
 		dpp::message msg;
 		dpp::embed ebd;
@@ -179,7 +176,7 @@ namespace botresponse {
 	}
 	void help(const dpp::slashcommand_t& aevent) {
 		//send list of commands, in an embed
-		std::cout << "[COMMANDS] /help was called.\n";
+		std::cout << "[COMMANDS] /help was called on server " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
 		dpp::message msg;
 		dpp::embed ebd;
 		ebd.set_title("Commands");
@@ -207,7 +204,7 @@ namespace botresponse {
 	}
 	void credits(const dpp::slashcommand_t& aevent) {
 		//send embed with credits
-		std::cout << "[COMMANDS] /credits was called.\n";
+		std::cout << "[COMMANDS] /credits was called on server " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
 		dpp::message msg;
 		dpp::embed ebd;
 		ebd.set_title("Author");
@@ -223,51 +220,69 @@ namespace botresponse {
 	
 	void home(const dpp::slashcommand_t& aevent) {
 		//set this channel to home channel, admin only
-		std::cout << "[COMMANDS] /home was called.\n";
-		bot.channelid = aevent.command.channel_id;
+		std::cout << "[COMMANDS] /home was called on server " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
+		bots.at(aevent.command.guild_id).channelid = aevent.command.channel_id;
 		
-		dpp::channel homechannel = bot.bothandle.channel_get_sync(bot.channelid);
+		dpp::channel homechannel = bottype::bothandle.channel_get_sync(bots.at(aevent.command.guild_id).channelid);
 		
 		aevent.reply(dpp::message("Channel " + homechannel.name + " is now the home channel.").set_flags(dpp::m_ephemeral));
 	}
 	void change(const dpp::slashcommand_t& aevent) {
 		//changes the server IP and port, admin only
-		std::cout << "[COMMANDS] /change [ip] [port] was called.\n";
+		if(std::get<dpp::command_interaction>(aevent.command.data).options.size() > 1) {
+			std::cout << "[COMMANDS] /change [ip] [port] was called on " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
+		}
+		else { std::cout << "[COMMANDS] /change [ip] was called on " + dpp::find_guild(aevent.command.guild_id)->name + ".\n"; }
 		
 		programinfos.at(aevent.command.guild_id).serverip = std::get<std::string>(aevent.get_parameter("ip"));
-		std::cout << "[COMMANDS] /change IP read\n";
 		
-		if(aevent.command.get_command_interaction().options.size() > 1) {
+		if(std::holds_alternative<std::string>(aevent.get_parameter("port"))) {
 			programinfos.at(aevent.command.guild_id).serverport = std::get<std::string>(aevent.get_parameter("port"));
 		}
-		std::cout << "[COMMANDS] /change port read\n";
 		
 		programinfos.at(aevent.command.guild_id).webrequest = makerequest(aevent.command.guild_id);
 		
-		aevent.reply(dpp::message("IP and port changed.\nIP is now " + programinfos.at(aevent.command.guild_id).serverip + " and the port is now " + programinfos.at(aevent.command.guild_id).serverport).set_flags(dpp::m_ephemeral));
+		if(std::get<dpp::command_interaction>(aevent.command.data).options.size() > 1) {
+			aevent.reply(
+				dpp::message(
+					"IP and port changed.\nIP is now " +
+					programinfos.at(aevent.command.guild_id).serverip +
+					" and the port is now " + programinfos.at(aevent.command.guild_id).serverport
+				).set_flags(dpp::m_ephemeral)
+			);
+		}
+		else {
+			std::cout << "[COMMANDS] /change [ip] [port] was called on " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
+			aevent.reply(
+				dpp::message(
+					"IP changed.\nIP is now " +
+					programinfos.at(aevent.command.guild_id).serverip
+				).set_flags(dpp::m_ephemeral)
+			);
+		}
 	}
 	void enableautoupdate(const dpp::slashcommand_t& aevent) {
-		std::cout << "[COMMANDS] /enableautoupdate was called.\n";
+		std::cout << "[COMMANDS] /enableautoupdate was called on " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
 		bots.at(aevent.command.guild_id).autoenabled = true; 
 		aevent.reply(dpp::message("Automatic updates enabled.").set_flags(dpp::m_ephemeral));
 	}
 	void disableautoupdate(const dpp::slashcommand_t& aevent) {
-		std::cout << "[COMMANDS] /disableautoupdate was called.\n";
+		std::cout << "[COMMANDS] /disableautoupdate was called on " + dpp::find_guild(aevent.command.guild_id)->name + ".\n";
 		bots.at(aevent.command.guild_id).autoenabled = false; 
 		aevent.reply(dpp::message("Automatic updates disabled.").set_flags(dpp::m_ephemeral));
 	}
 }
 
 void initbot() {
-	bot.bothandle.global_commands_get([&](const dpp::confirmation_callback_t& aconcl){
+	bottype::bothandle.global_commands_get([&](const dpp::confirmation_callback_t& aconcl){
 		for(auto& [key, command] : std::get<dpp::slashcommand_map>(aconcl.value)) {
-			bot.bothandle.global_command_delete(command.id);
+			bottype::bothandle.global_command_delete(command.id);
 		};
 	});
 	
-	bot.bothandle.on_log(dpp::utility::cout_logger());
+	bottype::bothandle.on_log(dpp::utility::cout_logger());
 	
-	bot.bothandle.on_slashcommand([&](const dpp::slashcommand_t& event) {
+	bottype::bothandle.on_slashcommand([&](const dpp::slashcommand_t& event) {
 		if (event.command.get_command_name() == "serverinfo") { botresponse::serverinfo(event); return; }
 		if (event.command.get_command_name() == "status") { botresponse::status(event); return; }
 		if (event.command.get_command_name() == "players") { botresponse::players(event); return; }
@@ -280,50 +295,50 @@ void initbot() {
 		if (event.command.get_command_name() == "disableautoupdate") { botresponse::disableautoupdate(event); return; }
 		
 	});
-	bot.bothandle.on_ready([&](const dpp::ready_t& event) {
+	bottype::bothandle.on_ready([&](const dpp::ready_t& event) {
 		if (dpp::run_once<struct register_bot_commands>()) {
 			//normal commands
 			
-			bot.bothandle.global_command_create(dpp::slashcommand("serverinfo", "Gets general information about the server.", bot.bothandle.me.id));
-			bot.bothandle.global_command_create(dpp::slashcommand("status", "Gets current server status.", bot.bothandle.me.id));
-			bot.bothandle.global_command_create(dpp::slashcommand("players", "List and amount of players currently online.", bot.bothandle.me.id));
-			bot.bothandle.global_command_create(dpp::slashcommand("help", "Help menu with bot usage.", bot.bothandle.me.id));
-			bot.bothandle.global_command_create(dpp::slashcommand("credits", "Author of the bot.", bot.bothandle.me.id));
+			bottype::bothandle.global_command_create(dpp::slashcommand("serverinfo", "Gets general information about the server.", bottype::bothandle.me.id));
+			bottype::bothandle.global_command_create(dpp::slashcommand("status", "Gets current server status.", bottype::bothandle.me.id));
+			bottype::bothandle.global_command_create(dpp::slashcommand("players", "List and amount of players currently online.", bottype::bothandle.me.id));
+			bottype::bothandle.global_command_create(dpp::slashcommand("help", "Help menu with bot usage.", bottype::bothandle.me.id));
+			bottype::bothandle.global_command_create(dpp::slashcommand("credits", "Author of the bot.", bottype::bothandle.me.id));
 			
 			//admin only commands
 			
-			dpp::slashcommand homecommand("home", "(admin only) Changes the bot so that automatic updates are written to this channel.", bot.bothandle.me.id);
+			dpp::slashcommand homecommand("home", "(admin only) Changes the bot so that automatic updates are written to this channel.", bottype::bothandle.me.id);
 			homecommand.default_member_permissions = 0; //admin only
-			bot.bothandle.global_command_create(homecommand);
+			bottype::bothandle.global_command_create(homecommand);
 			
-			dpp::slashcommand changecommand("change", "Params: [ip], [port]; (admin only) Changes IP and port of server to display.", bot.bothandle.me.id);
+			dpp::slashcommand changecommand("change", "Params: [ip], [port]; (admin only) Changes IP and port of server to display.", bottype::bothandle.me.id);
 			changecommand.default_member_permissions = 0;
 			changecommand.add_option(dpp::command_option(dpp::co_string, "ip", "IP of the new server", true));
-			changecommand.add_option(dpp::command_option(dpp::co_integer, "port", "Port of the new server", false));
-			bot.bothandle.global_command_create(changecommand);
+			changecommand.add_option(dpp::command_option(dpp::co_string, "port", "Port of the new server", false));
+			bottype::bothandle.global_command_create(changecommand);
 			
-			dpp::slashcommand enableaucommand("enableautoupdate", "(admin only) Enables automatic updates.", bot.bothandle.me.id);
+			dpp::slashcommand enableaucommand("enableautoupdate", "(admin only) Enables automatic updates.", bottype::bothandle.me.id);
 			enableaucommand.default_member_permissions = 0;
-			bot.bothandle.global_command_create(enableaucommand);
+			bottype::bothandle.global_command_create(enableaucommand);
 			
-			dpp::slashcommand disableaucommand("disableautoupdate", "(admin only) Disables automatic updates.", bot.bothandle.me.id);
+			dpp::slashcommand disableaucommand("disableautoupdate", "(admin only) Disables automatic updates.", bottype::bothandle.me.id);
 			disableaucommand.default_member_permissions = 0;
-			bot.bothandle.global_command_create(disableaucommand);
+			bottype::bothandle.global_command_create(disableaucommand);
 		}
 	});
-	bot.bothandle.on_guild_create([&](const dpp::guild_create_t& event) {
+	bottype::bothandle.on_guild_create([&](const dpp::guild_create_t& event) {
 		programinfos.emplace(std::make_pair(event.created->id, programinfotype{}));
 		bots.emplace(std::make_pair(event.created->id, bottype{}));
 		std::cout << "[SERVER] Bot added to server " + event.created->name + ".\n";
 	});
-	bot.bothandle.on_guild_delete([&](const dpp::guild_delete_t& event) {
+	bottype::bothandle.on_guild_delete([&](const dpp::guild_delete_t& event) {
 		programinfos.erase(programinfos.find(event.deleted->id));
 		bots.erase(bots.find(event.deleted->id));
 		std::cout << "[SERVER] Bot removed from server " + event.deleted->name + ".\n";
 	});
 	
-	bot.botthread = std::thread([&](){ 
+	bottype::botthread = std::thread([&](){ 
 		std::cout << "[BOT] Bot thread started!\n";
-		bot.bothandle.start(dpp::st_wait); 
+		bottype::bothandle.start(dpp::st_wait); 
 	});
 }
