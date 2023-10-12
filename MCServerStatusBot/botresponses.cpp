@@ -238,7 +238,7 @@ namespace botresponse {
 		std::cout << "[COMMANDS] /change IP read\n";
 		
 		if(aevent.command.get_command_interaction().options.size() > 1) {
-			programinfos.at(aevent.command.guild_id).serverport = std::get<std::string>(aevent.get_parameter("port")); //TODO: fix!
+			programinfos.at(aevent.command.guild_id).serverport = std::get<std::string>(aevent.get_parameter("port"));
 		}
 		std::cout << "[COMMANDS] /change port read\n";
 		
@@ -248,12 +248,12 @@ namespace botresponse {
 	}
 	void enableautoupdate(const dpp::slashcommand_t& aevent) {
 		std::cout << "[COMMANDS] /enableautoupdate was called.\n";
-		bot.autoenabled = true; 
+		bots.at(aevent.command.guild_id).autoenabled = true; 
 		aevent.reply(dpp::message("Automatic updates enabled.").set_flags(dpp::m_ephemeral));
 	}
 	void disableautoupdate(const dpp::slashcommand_t& aevent) {
 		std::cout << "[COMMANDS] /disableautoupdate was called.\n";
-		bot.autoenabled = false; 
+		bots.at(aevent.command.guild_id).autoenabled = false; 
 		aevent.reply(dpp::message("Automatic updates disabled.").set_flags(dpp::m_ephemeral));
 	}
 }
