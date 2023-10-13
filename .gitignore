@@ -4,3 +4,8 @@ build-Debug/
 build-Release/
 *.clangd
 *.clang-format
+compile_commands.json
+*.workspace
+*.project
+*.mk
+Makefile

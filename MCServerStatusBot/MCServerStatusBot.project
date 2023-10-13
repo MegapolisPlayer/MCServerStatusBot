@@ -3,6 +3,8 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="../logo.png"/>
+    <File Name="../README.md"/>
     <File Name="network.cpp"/>
     <File Name="botresponses.cpp"/>
     <File Name="network.hpp"/>
